@@ -1,10 +1,45 @@
 import tkinter as tk
-from tkinter import ttk
-from tkinter import filedialog, messagebox
+import threading
+from tkinter import ttk, messagebox
 import requests
 import os
+import http.client
+import json
+import webbrowser
 
-version= "V1.0"
+version= "V1.0.1"
+
+# 函数，用于执行更新检查操作
+def check_for_update_Auto():
+    latest_release_url = "/repos/ymh0000123/XPMSL-Download-module/releases/latest"
+
+    try:
+        conn = http.client.HTTPSConnection("api.github.com")
+        conn.request("GET", latest_release_url)
+        response = conn.getresponse()
+
+        if response.status == 200:
+            data = response.read()
+            latest_release = json.loads(data)
+            latest_version = latest_release["tag_name"]
+            if latest_version != version:
+                messagebox.showinfo("更新提示", f"当前版本 {version} 不是最新版，请更新到版本 {latest_version}")
+
+        conn.close()
+    except Exception as e:
+        print("检查更新时出错:", str(e))
+
+def perform_update_check():
+    # 创建一个新线程来执行更新检查
+    update_thread = threading.Thread(target=check_for_update_Auto)
+    update_thread.start()
+
+perform_update_check()
+
+# 最新版的函数
+def check_for_updates():
+    update_url = "https://github.com/ymh0000123/XPMSL-Download-module/releases"
+    webbrowser.open(update_url)
 
 # 函数，用于执行下载操作
 def download_file(status_label):
@@ -22,7 +57,7 @@ def download_file(status_label):
             # 获取当前工作目录
             current_directory = os.getcwd()
             # 创建目标文件夹（如果不存在）
-            target_folder = os.path.join(current_directory, "Download")
+            target_folder = os.path.join(current_directory, "XPMSL", "Download")
             os.makedirs(target_folder, exist_ok=True)
             file_path = os.path.join(target_folder, file_name)
             with open(file_path, "wb") as file:
@@ -77,6 +112,7 @@ def open_about_window():
 # 创建菜单栏
 menu_bar = tk.Menu(root)
 root.config(menu=menu_bar)
+menu_bar.add_cascade(label="查看最新版", command=check_for_updates)
 menu_bar.add_cascade(label="关于", command=open_about_window)
 
 # 获取文件列表内容
